@@ -1,0 +1,76 @@
+{
+  "title": "Symphonie en Ré (M. posth.) — « L'Horloge et l'Océan »",
+  "composer": "Dans le style de Maurice Ravel (1875–1937)",
+  "total_duration_seconds": 1516.4,
+  "total_duration_formatted": "25m 16s",
+  "movements": [
+    {
+      "number": 1,
+      "roman": "I",
+      "title": "Prélude et Allegro moderato",
+      "subtitle": "Brumes matinales et mécanique céleste (Forme Sonate)",
+      "tempo_marking": "Très modéré, fluide et lumineux — Allegro moderato",
+      "bpm": 96.0,
+      "time_signature": [
+        4,
+        4
+      ],
+      "key_signature": "Ré dorien / Ré majeur Lydien",
+      "description": "Grande forme sonate ravélienne précédée d'un Lever du jour (mes. 1–24), suivie de l'Exposition du Thème I horloger (mes. 25–56), d'un Pont polytonal en planing (mes. 57–72), du Thème II lyrique au hautbois en La mixolydien (mes. 73–96), d'un vaste Développement océanique (mes. 97–136), de la Réexposition solaire (mes. 137–160) et de la Coda (mes. 161–174).",
+      "total_beats": 696.0,
+      "duration_seconds": 435.0,
+      "note_count": 4976
+    },
+    {
+      "number": 2,
+      "roman": "II",
+      "title": "Scherzo — Vif et nerveux",
+      "subtitle": "Mirages basques (Alborada, Nocturne & Zortziko)",
+      "tempo_marking": "Vif, incisif et rythmique",
+      "bpm": 132.0,
+      "time_signature": [
+        3,
+        4
+      ],
+      "key_signature": "Mi phrygien / Sol mineur",
+      "description": "Architecture en cinq volets (A–B–A'–C–A'') : Scherzo I en Mi phrygien (mes. 1–56), Trio I nocturne au cor voilé (mes. 57–104), Reprise variée en hémiole (mes. 105–152), Trio II pastoral basque (mes. 153–192), puis Strette et Coda foudroyante (mes. 193–232).",
+      "total_beats": 696.0,
+      "duration_seconds": 316.4,
+      "note_count": 6630
+    },
+    {
+      "number": 3,
+      "roman": "III",
+      "title": "Lent et soutenu — Grande Passacaille",
+      "subtitle": "Tombeau d'un monde disparu (18 Variations sur une basse de Sarabande)",
+      "tempo_marking": "Lent, très expressif et sans rigueur",
+      "bpm": 64.0,
+      "time_signature": [
+        3,
+        4
+      ],
+      "key_signature": "Fa♯ mineur / La majeur",
+      "description": "Dix-huit variations symphoniques sur un cycle de sarabande de 8 mesures en Fa♯ mineur 9e, progressant du solo dépouillé des violoncelles et du cor anglais jusqu'au grand climax orchestral (Variations XII–XIV) avant de s'éteindre sur une tierce picarde lumineuse.",
+      "total_beats": 432.0,
+      "duration_seconds": 405.0,
+      "note_count": 2176
+    },
+    {
+      "number": 4,
+      "roman": "IV",
+      "title": "Final — Animé et féerique",
+      "subtitle": "La Grande Horlogerie et l'Océan (12 Paliers d'accumulation cyclique)",
+      "tempo_marking": "Animé, éblouissant et implacable",
+      "bpm": 124.0,
+      "time_signature": [
+        4,
+        4
+      ],
+      "key_signature": "Ré majeur Lydien",
+      "description": "Douze grands paliers d'accumulation orchestrale (alliant l'implacable crescendo de Boléro à la Danse générale de Daphnis et Chloé) avec récapitulation cyclique des thèmes des quatre mouvements jusqu'à l'apothéose en Ré majeur 13e (#11).",
+      "total_beats": 744.0,
+      "duration_seconds": 360.0,
+      "note_count": 6240
+    }
+  ]
+}

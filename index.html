@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Symphonie en Ré (M. posth.) — « L'Horloge et l'Océan » | Hommage à Maurice Ravel (25 min 16 s)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen p-6 md:p-10">
+  <div class="max-w-5xl mx-auto space-y-8">
+    <!-- Hero Header -->
+    <header class="border-b border-slate-800 pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold mb-3">
+          <span>Édition Symphonique Intégrale • 4 Mouvements • 736 Mesures • 25 min 16 s</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white">
+          Symphonie en Ré — <span class="italic font-serif text-amber-200">« L'Horloge et l'Océan »</span>
+        </h1>
+        <p class="text-slate-400 text-sm md:text-base mt-1">
+          La grande symphonie en quatre mouvements (~25 minutes) que <strong class="text-slate-200">Maurice Ravel (1875–1937)</strong> aurait pu écrire.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="exportWavBtn" onclick="exportCurrentMovementWav()" class="px-3.5 py-2 rounded-lg bg-amber-500 text-slate-950 font-semibold text-xs hover:bg-amber-400 transition">
+          ⬇ Générer & Télécharger WAV du Mouvement
+        </button>
+        <a href="./midi/Ravel_Symphonie_en_Re_Integrale.mid" download class="px-3.5 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 font-semibold text-xs hover:bg-slate-700 transition">
+          🎼 Partition MIDI Intégrale (25:16)
+        </a>
+      </div>
+    </header>
+
+    <!-- Interactive Web Audio Synthesizer & Visualizer Card -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-lg font-semibold text-white">Salle de Concert Web Audio & Partition Interactive (25 min 16 s)</h2>
+          <p id="mvtSubtitle" class="text-amber-300/90 text-xs mt-0.5">
+            I. Prélude et Allegro moderato — Forme Sonate complète (Ré dorien / majeur • 7:15)
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button onclick="selectMovement(0)" id="tab-0" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 transition">I. Prélude (7:15)</button>
+          <button onclick="selectMovement(1)" id="tab-1" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">II. Scherzo (5:16)</button>
+          <button onclick="selectMovement(2)" id="tab-2" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">III. Passacaille (6:45)</button>
+          <button onclick="selectMovement(3)" id="tab-3" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">IV. Final (6:00)</button>
+        </div>
+      </div>
+
+      <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+        <canvas id="scoreCanvas" width="900" height="220" class="w-full h-[220px] block cursor-pointer"></canvas>
+        <div class="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+          <span id="sectionBadge" class="px-2.5 py-1 text-xs font-medium rounded-md bg-slate-900/90 text-amber-200 border border-slate-700 shadow">
+            Cliquez sur « Écouter » pour lancer l'intégrale symphonique (25 min 16 s)
+          </span>
+          <span id="tempoBadge" class="px-2.5 py-1 text-xs font-mono rounded-md bg-slate-900/90 text-slate-300 border border-slate-700">
+            ♩ = 96 • 4/4 • Mes. 1
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button id="playBtn" onclick="togglePlay()" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition shadow shrink-0">
+          <span id="playIcon">▶</span>
+          <span id="playLabel">Écouter</span>
+        </button>
+        <input id="seekSlider" type="range" min="0" max="1000" value="0" oninput="onSeek(this.value)" class="w-full accent-amber-500 cursor-pointer h-2 rounded-lg" />
+        <span id="timeDisplay" class="text-xs font-mono text-slate-400 shrink-0 w-24 text-right">0:00 / 7:15</span>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-slate-400 font-medium">Pupitres actifs :</span>
+          <button onclick="toggleGroup('winds')" id="grp-winds" class="px-2.5 py-1 rounded-md border border-slate-700 bg-slate-800 text-sky-300 font-medium transition">● Bois (Flûte, Hautbois, Clar.)</button>
+          <button onclick="toggleGroup('harpcel')" id="grp-harpcel" class="px-2.5 py-1 rounded-md border border-slate-700 bg-slate-800 text-yellow-300 font-medium transition">● Harpe & Célesta</button>
+          <button onclick="toggleGroup('strings')" id="grp-strings" class="px-2.5 py-1 rounded-md border border-slate-700 bg-slate-800 text-emerald-300 font-medium transition">● Cordes & Pizz.</button>
+          <button onclick="toggleGroup('brass')" id="grp-brass" class="px-2.5 py-1 rounded-md border border-slate-700 bg-slate-800 text-rose-300 font-medium transition">● Cors, Cuivres & Timbales</button>
+        </div>
+        <label class="flex items-center gap-2 text-slate-300 cursor-pointer">
+          <input type="checkbox" id="autoNext" checked class="accent-amber-500 rounded" />
+          <span>Enchaîner les 4 mouvements (25:16)</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Program Notes & Individual MIDI Downloads -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-amber-300 text-sm">I. Prélude et Allegro moderato (7 min 15 s)</h3>
+          <a href="./midi/Ravel_Symphonie_Mvt_1_I.mid" download class="text-xs text-amber-400 hover:underline">MIDI (174 mes.) ⬇</a>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          <em>« Brumes matinales et mécanique céleste »</em> — Grande forme sonate précédée d'un Lever du jour (mes. 1–24), Exposition du Thème I horloger (mes. 25–56), Pont modulant en planing (mes. 57–72), Thème II lyrique au hautbois (mes. 73–96), vaste Développement océanique (mes. 97–136), Réexposition solaire en Ré Lydien (mes. 137–160) et Coda (mes. 161–174).
+        </p>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-amber-300 text-sm">II. Scherzo — Vif et nerveux (5 min 16 s)</h3>
+          <a href="./midi/Ravel_Symphonie_Mvt_2_II.mid" download class="text-xs text-amber-400 hover:underline">MIDI (232 mes.) ⬇</a>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          <em>« Mirages basques (Alborada, Nocturne & Zortziko) »</em> — Architecture en cinq volets (A–B–A'–C–A'') : Scherzo I en Mi phrygien (mes. 1–56), Trio I nocturne au cor voilé (mes. 57–104), Reprise variée en hémiole (mes. 105–152), Trio II pastoral basque (mes. 153–192), Strette et Coda (mes. 193–232).
+        </p>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-amber-300 text-sm">III. Lent et soutenu — Grande Passacaille (6 min 45 s)</h3>
+          <a href="./midi/Ravel_Symphonie_Mvt_3_III.mid" download class="text-xs text-amber-400 hover:underline">MIDI (144 mes.) ⬇</a>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          <em>« Tombeau d'un monde disparu »</em> — 18 Variations symphoniques sur une basse de sarabande de 8 mesures en Fa♯ mineur 9e, progressant du solo de cor anglais jusqu'au grand climax orchestral (Variations XII–XIV) avant de s'éteindre sur une lumineuse tierce picarde.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold text-amber-300 text-sm">IV. Final — Animé et féerique (6 min 00 s)</h3>
+          <a href="./midi/Ravel_Symphonie_Mvt_4_IV.mid" download class="text-xs text-amber-400 hover:underline">MIDI (186 mes.) ⬇</a>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          <em>« La Grande Horlogerie et l'Océan »</em> — Crescendo orchestral en 12 paliers alliant la mécanique implacable de <em>Boléro</em> à la <em>Danse générale</em> de <em>Daphnis et Chloé</em>, avec récapitulation cyclique des thèmes des 4 mouvements.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function buildFullScaleSymphony() {
+      const mvts = [];
+      const add = (arr, p, s, d, v, i, sec) => arr.push({ p, s, d, v, i, sec });
+
+      // MOUVEMENT I (696 beats @ 96 BPM = 7m15s)
+      const n1 = [];
+      const m1Progressions = [
+        [38, [50, 57, 60, 64, 69], [62, 64, 65, 69, 72, 76, 79, 81]],
+        [38, [50, 59, 62, 65, 71], [62, 65, 67, 71, 74, 77, 79, 83]],
+        [38, [52, 59, 62, 66, 69], [64, 66, 67, 71, 74, 78, 79, 83]],
+        [38, [52, 57, 61, 64, 69], [61, 64, 67, 69, 73, 76, 79, 81]],
+        [41, [53, 60, 64, 67, 71], [60, 64, 67, 71, 72, 76, 79, 84]],
+        [35, [47, 54, 57, 62, 66], [59, 62, 66, 69, 71, 74, 78, 81]],
+        [43, [55, 59, 62, 66, 69], [59, 62, 66, 69, 71, 74, 78, 83]],
+        [45, [52, 57, 60, 64, 67], [60, 64, 67, 71, 72, 76, 79, 81]],
+      ];
+      const m1ThemeCells = [
+        [[0.0, 1.5, 0], [1.5, 0.5, 1], [2.0, 1.0, 2], [3.0, 1.0, 4]],
+        [[0.0, 1.5, 3], [1.5, 0.5, 2], [2.0, 1.0, 1], [3.0, 1.0, 0]],
+        [[0.5, 1.0, 2], [1.5, 0.5, 4], [2.0, 0.5, 5], [2.5, 1.5, 6]],
+        [[0.0, 2.0, 5], [2.0, 1.0, 3], [3.0, 1.0, 2]],
+        [[0.0, 1.0, 4], [1.0, 0.5, 5], [1.5, 0.5, 6], [2.0, 1.5, 7], [3.5, 0.5, 5]],
+        [[0.0, 1.5, 6], [1.5, 0.5, 4], [2.0, 1.0, 2], [3.0, 1.0, 1]],
+      ];
+
+      for (let bar = 0; bar < 174; bar++) {
+        const b0 = bar * 4.0;
+        let sec = "", trans = 0, dyn = 64, mode = "prelude";
+        if (bar < 24) { sec = "Introduction — Lever du jour (Harpe, Célesta & Flûte en Ré dorien)"; mode = "prelude"; dyn = 58 + Math.floor(bar / 2); }
+        else if (bar < 56) { sec = "Exposition (Thème I) — Allegro moderato : L'Horlogerie céleste"; mode = "theme1"; dyn = 74; }
+        else if (bar < 72) { sec = "Pont modulant — Miroitements polytonaux & Planing d'accords de 9e"; mode = "bridge"; trans = 3; dyn = 78; }
+        else if (bar < 96) { sec = "Exposition (Thème II) — Chant lyrique du Hautbois en La mixolydien"; mode = "theme2"; trans = 7; dyn = 68; }
+        else if (bar < 136) { sec = "Grand Développement — Tourmente océanique & Contrepoint orchestral"; mode = "dev"; trans = ((bar - 96) % 5) * 2 - 3; dyn = 82 + Math.floor((bar - 96) / 3); }
+        else if (bar < 160) { sec = "Réexposition solaire — Thèmes I & II transfigurés en Ré majeur Lydien"; mode = "recap"; trans = 0; dyn = 88; }
+        else { sec = "Coda — Scintillement final de l'Horloge en Ré majeur 9e"; mode = "coda"; trans = 0; dyn = Math.max(54, 92 - (bar - 160) * 3); }
+
+        const [bass0, pad0, arp0] = m1Progressions[bar % m1Progressions.length];
+        const bass = bass0 + (trans > 4 ? trans - 12 : trans);
+        const pad = pad0.map(p => p + trans);
+        const arp = arp0.map(p => p + trans);
+
+        if (mode === "theme1" || mode === "bridge" || mode === "dev") {
+          for (let beat = 0; beat < 4; beat++) {
+            add(n1, beat % 2 === 0 ? bass : bass + 7, b0 + beat, 0.42, dyn + 6, "pizz", sec);
+            add(n1, pad[beat % pad.length], b0 + beat + 0.5, 0.35, dyn - 2, "pizz", sec);
+          }
+        } else { add(n1, bass, b0, 3.9, dyn, "bass", sec); }
+
+        pad.forEach(p => add(n1, p, b0, 3.85, dyn - 8, "strings", sec));
+        if (mode === "dev" || mode === "recap") add(n1, pad[1], b0, 3.7, dyn - 4, "horn", sec);
+        if (mode === "dev" && bar % 2 === 0) {
+          add(n1, bass, b0, 0.6, dyn + 10, "timpani", sec);
+          add(n1, pad[2] + 12, b0 + 2.0, 1.8, dyn, "brass", sec);
+        }
+
+        const arpSub = (mode === "prelude" || mode === "recap" || mode === "coda") ? 16 : 8;
+        const step = 4.0 / arpSub;
+        for (let i = 0; i < arpSub; i++) {
+          const idx = i < arpSub / 2 ? i : (arpSub - 1 - i);
+          add(n1, arp[idx % arp.length], b0 + i * step, step * 1.4, dyn - 10 + (i % 4) * 2, "harp", sec);
+        }
+        if (bar % 2 === 0 || mode === "prelude" || mode === "coda") {
+          add(n1, arp[arp.length - 1] + 12, b0 + 1.0, 1.2, dyn - 14, "celesta", sec);
+          add(n1, arp[arp.length - 2] + 12, b0 + 3.0, 1.0, dyn - 16, "celesta", sec);
+        }
+
+        const cell = m1ThemeCells[(bar + Math.floor(bar / 8)) % m1ThemeCells.length];
+        const leadInst = (mode === "prelude") ? "flute"
+          : (mode === "theme1") ? (bar % 8 < 4 ? "oboe" : "flute")
+          : (mode === "bridge") ? "clarinet"
+          : (mode === "theme2") ? (bar % 8 < 4 ? "oboe" : "clarinet")
+          : (mode === "dev") ? (bar % 4 < 2 ? "flute" : "brass") : "flute";
+
+        cell.forEach(([st, dur, deg]) => {
+          const pitch = arp[deg % arp.length] + (deg >= arp.length ? 12 : 0);
+          add(n1, pitch, b0 + st, dur, Math.min(108, dyn + 14), leadInst, sec);
+          if (mode === "theme1" || mode === "theme2" || mode === "recap") {
+            add(n1, pitch - 3, b0 + st, dur, Math.min(100, dyn + 6), leadInst === "flute" ? "oboe" : "clarinet", sec);
+          }
+          if (mode === "recap") add(n1, pitch - 12, b0 + st, dur, dyn + 8, "strings", sec);
+        });
+      }
+      mvts.push({ roman: "I", title: "I. Prélude et Allegro moderato — Forme Sonate complète (Ré dorien / majeur • 7:15)", bpm: 96, meter: "4/4", beatsPerBar: 4, totalBeats: 696, notes: n1 });
+
+      // MOUVEMENT II (696 beats @ 132 BPM = 5m16s)
+      const n2 = [];
+      const phrygProg = [
+        [40, [52, 56, 59, 62, 65]], [41, [53, 57, 60, 64, 69]], [43, [55, 59, 62, 65, 69]], [41, [53, 57, 60, 64, 67]],
+        [40, [52, 56, 59, 64, 68]], [45, [57, 60, 64, 67, 71]], [41, [53, 56, 59, 62, 65]], [40, [52, 56, 59, 64, 69]],
+      ];
+      const trioProg = [
+        [43, [55, 58, 62, 66, 69]], [39, [51, 55, 58, 62, 65]], [36, [48, 55, 58, 63, 67]], [38, [50, 54, 57, 60, 66]],
+        [43, [55, 58, 62, 65, 69]], [41, [53, 56, 60, 63, 68]], [39, [51, 55, 58, 62, 67]], [40, [52, 56, 59, 62, 65]],
+      ];
+      const scherzoCells = [
+        [[0.0, 0.5, 4], [0.5, 0.25, 5], [0.75, 0.25, 4], [1.0, 0.5, 3], [1.5, 1.0, 4], [2.5, 0.5, 1]],
+        [[0.0, 0.5, 2], [0.5, 0.5, 4], [1.0, 0.5, 5], [1.5, 1.0, 7], [2.5, 0.5, 6]],
+        [[0.0, 0.75, 6], [0.75, 0.75, 5], [1.5, 0.75, 4], [2.25, 0.75, 2]],
+        [[0.0, 0.5, 3], [0.5, 0.5, 2], [1.0, 0.5, 1], [1.5, 1.5, 0]],
+      ];
+
+      for (let bar = 0; bar < 232; bar++) {
+        const b0 = bar * 3.0;
+        let isTrio = false, sec = "", dyn = 84, trans = 0;
+        if (bar < 56) { sec = "Scherzo I (A) — Alborada basque : Pizzicati en guitare & Mi phrygien"; isTrio = false; dyn = 86; }
+        else if (bar < 104) { sec = "Trio I Nocturne (B) — Solo de Cor voilé & Célesta en Sol mineur"; isTrio = true; dyn = 64; }
+        else if (bar < 152) { sec = "Scherzo II (A') — Reprise variée en hémiole (3/4 ↔ 6/8)"; isTrio = false; trans = 2; dyn = 90; }
+        else if (bar < 192) { sec = "Trio II Pastoral (C) — Zortziko basque aux Hautbois & Harpe"; isTrio = true; trans = 5; dyn = 68; }
+        else { sec = "Strette & Coda — Tourbillon ibérique et fusée finale"; isTrio = false; trans = 0; dyn = 94 + Math.min(14, Math.floor((bar - 192) / 3)); }
+
+        const prog = isTrio ? trioProg : phrygProg;
+        const [bass0, ch0] = prog[bar % prog.length];
+        const bass = bass0 + (trans > 3 ? trans - 12 : trans);
+        const ch = ch0.map(p => p + trans);
+
+        if (!isTrio) {
+          add(n2, bass, b0, 0.45, dyn + 4, "timpani", sec);
+          add(n2, bass, b0, 0.8, dyn, "bass", sec);
+          add(n2, bass + 7, b0 + 1.5, 0.8, dyn - 4, "bass", sec);
+          [0.0, 0.75, 1.5, 2.25].forEach(sub => ch.forEach((p, i) => add(n2, p + 12, b0 + sub + i * 0.03, 0.3, dyn - 4, "pizz", sec)));
+          const cell = scherzoCells[(bar + Math.floor(bar / 4)) % scherzoCells.length];
+          cell.forEach(([st, dur, deg]) => {
+            const p = ch[deg % ch.length] + 12 + (deg >= ch.length ? 12 : 0);
+            add(n2, p, b0 + st, dur, Math.min(110, dyn + 8), bar % 2 === 0 ? "oboe" : "clarinet", sec);
+            add(n2, p + 12, b0 + st, dur * 0.8, Math.min(106, dyn + 2), "flute", sec);
+            if (bar >= 192) add(n2, p, b0 + st, dur, dyn + 4, "brass", sec);
+          });
+        } else {
+          add(n2, bass, b0, 2.9, dyn, "bass", sec);
+          ch.forEach(p => add(n2, p, b0, 2.85, dyn - 10, "strings", sec));
+          for (let i = 0; i < 6; i++) {
+            add(n2, ch[i % ch.length] + 12, b0 + i * 0.5, 0.7, dyn - 10, "celesta", sec);
+            add(n2, ch[(i + 2) % ch.length] + 12, b0 + i * 0.5, 0.8, dyn - 8, "harp", sec);
+          }
+          const soloInst = bar < 104 ? "horn" : "oboe";
+          add(n2, ch[(bar * 2) % ch.length] + 12, b0, 1.9, dyn + 18, soloInst, sec);
+          add(n2, ch[(bar * 2 + 2) % ch.length] + 12, b0 + 2.0, 0.95, dyn + 14, soloInst, sec);
+        }
+      }
+      mvts.push({ roman: "II", title: "II. Scherzo : Vif et nerveux — Mirages basques (Mi phrygien / Sol mineur • 5:16)", bpm: 132, meter: "3/4", beatsPerBar: 3, totalBeats: 696, notes: n2 });
+
+      // MOUVEMENT III (432 beats @ 64 BPM = 6m45s)
+      const n3 = [];
+      const passCycle = [
+        [42, [54, 57, 61, 64, 68]], [40, [52, 56, 59, 61, 66]], [38, [50, 54, 57, 61, 64]], [37, [49, 53, 56, 59, 62]],
+        [35, [47, 50, 54, 57, 61]], [32, [44, 50, 54, 57, 62]], [37, [49, 53, 57, 61, 64]], [42, [54, 57, 61, 64, 68]],
+      ];
+      const cycleDescriptions = [
+        "Var. I — Basse de Sarabande nue aux Violoncelles & Contrebasses",
+        "Var. II — Entrée de la grande cantilène du Cor anglais solo",
+        "Var. III — Dialogue du Cor anglais et de la Flûte sur tapis de Cordes",
+        "Var. IV — Arabesques de Clarinette en dixièmes",
+        "Var. V — Miroitements de Harpe en triolets (Hommage à la Pavane)",
+        "Var. VI — Chant des Violons divisés dans le registre aigu",
+        "Var. VII — Clair-obscur nocturne : Célesta, Harpe & Cor voilé",
+        "Var. VIII — Contrepoint chromatique des Bois",
+        "Var. IX — Éclaircie modale en La majeur (Planing d'accords de 11e)",
+        "Var. X — Frémissement intérieur (Pizzicati & Arpèges croisés)",
+        "Var. XI — Montée dramatique des Cordes et des Cors",
+        "Var. XII — Grand Appel des Cuivres sur la basse obstinée",
+        "Var. XIII — Apogée lyrique (Tutti symphonique passionné)",
+        "Var. XIV — Illumination ravélienne (Glissandi de Harpe & Chœur des Bois)",
+        "Var. XV — Décroissance et souvenir lointain",
+        "Var. XVI — Retour solitaire du Cor anglais et du Violon solo",
+        "Var. XVII — Murmure cristallin de Célesta et Cordes en sourdine",
+        "Var. XVIII — Extinction sur la Tierce picarde (Fa# majeur 9e)"
+      ];
+
+      for (let c = 0; c < 18; c++) {
+        const sec = cycleDescriptions[c];
+        const dyn = Math.round(c <= 12 ? (52 + c * 3.8) : Math.max(48, 98 - (c - 12) * 9));
+        for (let bIn = 0; bIn < 8; bIn++) {
+          const bar = c * 8 + bIn, b0 = bar * 3.0;
+          const [bass, chOrig] = passCycle[bIn];
+          const ch = (c >= 16 && bIn === 7) ? [54, 58, 61, 65, 68] : chOrig;
+          add(n3, bass, b0, 1.9, dyn + 4, "bass", sec);
+          add(n3, bass + 12, b0 + 2.0, 0.95, dyn, "bass", sec);
+          ch.forEach(p => add(n3, p, b0, 2.9, dyn - 8, "strings", sec));
+          if (c >= 2) ch.forEach((p, i) => add(n3, p + 12, b0 + 0.5 + i * 0.25, 1.4, dyn - 10, "harp", sec));
+          if (c === 6 || c === 8 || c === 13 || c >= 16) add(n3, ch[ch.length - 1] + 24, b0 + 1.0, 1.5, dyn - 12, "celesta", sec);
+          if (c >= 1) {
+            const lead = (c % 4 === 1) ? "oboe" : (c % 4 === 2) ? "flute" : (c % 4 === 3) ? "clarinet" : "horn";
+            const m1 = ch[(bIn + c) % ch.length] + 12, m2 = ch[(bIn + c + 2) % ch.length] + 12, m3 = ch[(bIn + c + 4) % ch.length] + 12;
+            add(n3, m1, b0, 1.5, Math.min(106, dyn + 14), lead, sec);
+            add(n3, m2, b0 + 1.5, 0.5, Math.min(104, dyn + 10), lead, sec);
+            add(n3, m3, b0 + 2.0, 1.0, Math.min(106, dyn + 12), lead, sec);
+            if (c >= 10 && c <= 14) {
+              add(n3, m1 + 12, b0, 1.5, dyn + 8, "flute", sec);
+              add(n3, m1, b0, 2.8, dyn + 6, "brass", sec);
+            }
+          }
+        }
+      }
+      mvts.push({ roman: "III", title: "III. Lent et soutenu — Grande Passacaille : 18 Variations (Fa# mineur / La majeur • 6:45)", bpm: 64, meter: "3/4", beatsPerBar: 3, totalBeats: 432, notes: n3 });
+
+      // MOUVEMENT IV (744 beats @ 124 BPM = 6m00s)
+      const n4 = [];
+      const finCycle = [
+        [38, [50, 57, 61, 66, 69]], [40, [52, 59, 62, 66, 71]], [42, [54, 61, 64, 69, 73]], [43, [55, 62, 66, 69, 74]],
+        [38, [50, 57, 62, 66, 71]], [36, [48, 55, 60, 64, 69]], [43, [55, 59, 62, 67, 71]], [45, [57, 62, 64, 69, 74]],
+      ];
+      const palierNames = [
+        "Palier I — Murmure mécanique initial (Ostinato de Pizzicati & Harpe seule)",
+        "Palier II — Entrée de la Flûte solitaire sur le mouvement d'horlogerie",
+        "Palier III — Dialogue de la Clarinette et du Hautbois en mode de Ré Lydien",
+        "Palier IV — Éclat cristallin du Célesta et des Cordes divisées",
+        "Palier V — Appel lointain des Cors et doublement en tierces parallèles",
+        "Palier VI — Polytonalité ravélienne (Superposition Ré majeur / Do majeur 9e)",
+        "Palier VII — Rappel cyclique de la Passacaille (Mouvement III) aux Bois",
+        "Palier VIII — Rappel cyclique du Scherzo basque (Mouvement II) aux Pizzicati",
+        "Palier IX — Grande Vague océanique : Arpèges de Harpe & Cordes passionnées",
+        "Palier X — Rappel cyclique solennel du Thème initial (Mouvement I) aux Cuivres",
+        "Palier XI — Danse générale incandescente (Tutti symphonique & Timbales)",
+        "Palier XII — Apothéose finale : La Grande Horlogerie en Ré majeur 13e (#11)"
+      ];
+      const instList = ["flute", "clarinet", "oboe", "flute", "horn", "oboe", "oboe", "clarinet", "flute", "brass", "brass", "brass"];
+
+      for (let bar = 0; bar < 186; bar++) {
+        const b0 = bar * 4.0, stage = Math.min(11, Math.floor(bar / 15));
+        const sec = palierNames[stage], dyn = Math.round(54 + stage * 4.5);
+        const [bass, ch] = finCycle[bar % finCycle.length];
+
+        add(n4, bass, b0, 1.9, dyn + 6, "bass", sec);
+        add(n4, bass + 7, b0 + 2.0, 1.9, dyn + 4, "bass", sec);
+        if (stage >= 6) {
+          add(n4, bass, b0, 0.5, dyn + 10, "timpani", sec);
+          add(n4, bass + 7, b0 + 2.0, 0.5, dyn + 6, "timpani", sec);
+          if (stage >= 10) add(n4, bass, b0 + 3.5, 0.4, dyn + 8, "timpani", sec);
+        }
+        for (let s = 0; s < 8; s++) {
+          const po = ch[s % ch.length] + 12;
+          add(n4, po, b0 + s * 0.5, 0.4, dyn - 4, "harp", sec);
+          if (stage <= 4 || stage === 7) add(n4, ch[(s + 1) % ch.length], b0 + s * 0.5, 0.3, dyn, "pizz", sec);
+          if (stage >= 3) add(n4, po + 12, b0 + s * 0.5 + 0.25, 0.35, dyn - 8, "celesta", sec);
+        }
+        if (stage >= 1) ch.forEach(p => add(n4, p, b0, 3.9, dyn - 4, "strings", sec));
+        if (stage >= 4) { add(n4, ch[1], b0, 3.8, dyn, "horn", sec); add(n4, ch[3], b0, 3.8, dyn, "horn", sec); }
+        if (stage >= 9) ch.forEach(p => add(n4, p + 12, b0, 3.8, dyn + 4, "brass", sec));
+
+        const lead = instList[stage];
+        const mp1 = ch[(bar * 2) % ch.length] + 12, mp2 = ch[(bar * 2 + 1) % ch.length] + 12, mp3 = ch[(bar * 2 + 3) % ch.length] + 12;
+        add(n4, mp1, b0, 1.5, Math.min(110, dyn + 12), lead, sec);
+        add(n4, mp2, b0 + 1.5, 0.5, Math.min(108, dyn + 8), lead, sec);
+        add(n4, mp3, b0 + 2.0, 2.0, Math.min(112, dyn + 14), lead, sec);
+        if (stage >= 4) { add(n4, mp1 - 3, b0, 1.5, dyn + 6, "clarinet", sec); add(n4, mp3 - 3, b0 + 2.0, 2.0, dyn + 8, "clarinet", sec); }
+        if (stage >= 8) { add(n4, mp1 + 12, b0, 1.5, dyn + 8, "flute", sec); add(n4, mp3 + 12, b0 + 2.0, 2.0, dyn + 10, "flute", sec); }
+      }
+      mvts.push({ roman: "IV", title: "IV. Final : Animé et féerique — La Grande Horlogerie et l'Océan (Ré majeur Lydien • 6:00)", bpm: 124, meter: "4/4", beatsPerBar: 4, totalBeats: 744, notes: n4 });
+
+      return mvts;
+    }
+
+    const MOVEMENTS = buildFullScaleSymphony();
+    let currentMvtIdx = 0, isPlaying = false, currentBeat = 0, lastFrameTime = 0, scheduledIndex = 0;
+
+    const groupEnabled = { winds: true, harpcel: true, strings: true, brass: true };
+    const instToGroup = {
+      flute: "winds", oboe: "winds", clarinet: "winds",
+      harp: "harpcel", celesta: "harpcel",
+      strings: "strings", pizz: "strings", bass: "strings",
+      horn: "brass", brass: "brass", timpani: "brass"
+    };
+    const instColors = {
+      flute: "#38bdf8", oboe: "#fb923c", clarinet: "#a78bfa",
+      harp: "#facc15", celesta: "#f472b6",
+      strings: "#34d399", pizz: "#10b981", bass: "#059669",
+      horn: "#fbbf24", brass: "#ef4444", timpani: "#f87171"
+    };
+
+    let audioCtx = null, masterGain = null, reverbNode = null;
+
+    function initAudio() {
+      if (audioCtx) return;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.85;
+
+      const sr = audioCtx.sampleRate, len = Math.floor(sr * 2.2);
+      const impulse = audioCtx.createBuffer(2, len, sr);
+      for (let ch = 0; ch < 2; ch++) {
+        const data = impulse.getChannelData(ch);
+        for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (sr * 0.65)) * 0.35;
+      }
+      reverbNode = audioCtx.createConvolver();
+      reverbNode.buffer = impulse;
+
+      const wetGain = audioCtx.createGain(); wetGain.gain.value = 0.38;
+      const dryGain = audioCtx.createGain(); dryGain.gain.value = 0.78;
+      masterGain.connect(dryGain); masterGain.connect(reverbNode);
+      reverbNode.connect(wetGain);
+      dryGain.connect(audioCtx.destination); wetGain.connect(audioCtx.destination);
+    }
+
+    function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+    function scheduleNoteOnContext(ctx, dest, n, startTimeSec, secPerBeat) {
+      const grp = instToGroup[n.i] || "strings";
+      if (!groupEnabled[grp]) return;
+
+      const dur = Math.max(0.1, n.d * secPerBeat);
+      const freq = midiToFreq(n.p);
+      const vel = (n.v / 127);
+
+      const osc1 = ctx.createOscillator(), osc2 = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter(), env = ctx.createGain();
+      const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+
+      let att = 0.04, rel = 0.22, gainPeak = vel * 0.085, pan = 0;
+      filter.type = "lowpass";
+
+      switch (n.i) {
+        case "flute": osc1.type = "sine"; osc2.type = "triangle"; filter.frequency.value = freq * 4.5; att = 0.06; rel = 0.18; gainPeak = vel * 0.10; pan = -0.35; break;
+        case "oboe": osc1.type = "sawtooth"; osc2.type = "triangle"; filter.frequency.value = freq * 3.8; att = 0.04; rel = 0.16; gainPeak = vel * 0.07; pan = -0.15; break;
+        case "clarinet": osc1.type = "square"; osc2.type = "sine"; filter.frequency.value = freq * 3.2; att = 0.05; rel = 0.16; gainPeak = vel * 0.06; pan = 0.2; break;
+        case "harp": osc1.type = "triangle"; osc2.type = "sine"; filter.frequency.value = freq * 5.0; att = 0.006; rel = 0.55; gainPeak = vel * 0.085; pan = -0.5; break;
+        case "celesta": osc1.type = "sine"; osc2.type = "sine"; osc2.detune.value = 1200; filter.frequency.value = freq * 6.0; att = 0.004; rel = 0.45; gainPeak = vel * 0.065; pan = 0.5; break;
+        case "strings": osc1.type = "sawtooth"; osc2.type = "sawtooth"; osc2.detune.value = 7; filter.frequency.value = freq * 3.0; att = 0.16; rel = 0.35; gainPeak = vel * 0.038; pan = 0.0; break;
+        case "pizz": osc1.type = "triangle"; osc2.type = "sawtooth"; filter.frequency.value = freq * 2.5; att = 0.005; rel = 0.18; gainPeak = vel * 0.085; pan = 0.15; break;
+        case "bass": osc1.type = "sawtooth"; osc2.type = "triangle"; filter.frequency.value = freq * 2.4; att = 0.07; rel = 0.28; gainPeak = vel * 0.075; pan = 0.35; break;
+        case "horn": osc1.type = "sawtooth"; osc2.type = "triangle"; filter.frequency.value = freq * 2.6; att = 0.08; rel = 0.25; gainPeak = vel * 0.06; pan = -0.4; break;
+        case "brass": osc1.type = "sawtooth"; osc2.type = "sawtooth"; osc2.detune.value = 5; filter.frequency.value = freq * 4.2; att = 0.035; rel = 0.22; gainPeak = vel * 0.06; pan = 0.4; break;
+        case "timpani": osc1.type = "sine"; osc2.type = "triangle"; filter.frequency.value = freq * 2.0; att = 0.005; rel = 0.45; gainPeak = vel * 0.14; pan = 0.0; break;
+      }
+
+      osc1.frequency.setValueAtTime(freq, startTimeSec);
+      osc2.frequency.setValueAtTime(freq, startTimeSec);
+
+      const isPerc = (n.i === "harp" || n.i === "celesta" || n.i === "pizz" || n.i === "timpani");
+      const stopTime = startTimeSec + dur + rel;
+
+      env.gain.setValueAtTime(0.0001, startTimeSec);
+      env.gain.linearRampToValueAtTime(gainPeak, startTimeSec + att);
+      if (isPerc) env.gain.exponentialRampToValueAtTime(0.0001, stopTime);
+      else {
+        env.gain.setValueAtTime(gainPeak * 0.85, startTimeSec + Math.max(att + 0.01, dur));
+        env.gain.exponentialRampToValueAtTime(0.0001, stopTime);
+      }
+
+      osc1.connect(filter); osc2.connect(filter); filter.connect(env);
+      if (panner) { panner.pan.value = pan; env.connect(panner); panner.connect(dest); }
+      else { env.connect(dest); }
+
+      osc1.start(startTimeSec); osc2.start(startTimeSec);
+      osc1.stop(stopTime + 0.02); osc2.stop(stopTime + 0.02);
+    }
+
+    function playOrchestralNote(n, secPerBeat) {
+      if (!audioCtx) return;
+      scheduleNoteOnContext(audioCtx, masterGain, n, audioCtx.currentTime, secPerBeat);
+    }
+
+    async function exportCurrentMovementWav() {
+      const btn = document.getElementById("exportWavBtn");
+      const mvt = MOVEMENTS[currentMvtIdx];
+      btn.textContent = `⏳ Synthèse WAV Mouvement ${mvt.roman} en cours...`;
+      btn.disabled = true;
+
+      await new Promise(r => setTimeout(r, 50));
+      const sr = 22050;
+      const secPerBeat = 60 / mvt.bpm;
+      const totalSec = mvt.totalBeats * secPerBeat + 2.5;
+      const offlineCtx = new OfflineAudioContext(2, Math.ceil(totalSec * sr), sr);
+
+      for (const n of mvt.notes) {
+        scheduleNoteOnContext(offlineCtx, offlineCtx.destination, n, n.s * secPerBeat, secPerBeat);
+      }
+
+      const rendered = await offlineCtx.startRendering();
+      const wavBlob = audioBufferToWav(rendered);
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Ravel_Symphonie_Mvt_${currentMvtIdx + 1}_${mvt.roman}.wav`;
+      a.click();
+
+      btn.textContent = "⬇ Générer & Télécharger WAV du Mouvement";
+      btn.disabled = false;
+    }
+
+    function audioBufferToWav(buffer) {
+      const numCh = buffer.numberOfChannels, sr = buffer.sampleRate, len = buffer.length;
+      const bytesPerSample = 2, blockAlign = numCh * bytesPerSample;
+      const dataSize = len * blockAlign;
+      const ab = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(ab);
+      const writeStr = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+
+      writeStr(0, "RIFF"); view.setUint32(4, 36 + dataSize, true); writeStr(8, "WAVE");
+      writeStr(12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+      view.setUint16(22, numCh, true); view.setUint32(24, sr, true);
+      view.setUint32(28, sr * blockAlign, true); view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 16, true); writeStr(36, "data"); view.setUint32(40, dataSize, true);
+
+      const chData = [];
+      for (let c = 0; c < numCh; c++) chData.push(buffer.getChannelData(c));
+      let offset = 44;
+      for (let i = 0; i < len; i++) {
+        for (let c = 0; c < numCh; c++) {
+          const s = Math.max(-1, Math.min(1, chData[c][i]));
+          view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+          offset += 2;
+        }
+      }
+      return new Blob([ab], { type: "audio/wav" });
+    }
+
+    function formatSec(s) {
+      const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ":" + (sec < 10 ? "0" : "") + sec;
+    }
+
+    function prepareMovement(idx) {
+      currentMvtIdx = idx;
+      const mvt = MOVEMENTS[idx];
+      mvt.notes.sort((a, b) => a.s - b.s);
+      currentBeat = 0; scheduledIndex = 0;
+      document.getElementById("mvtSubtitle").textContent = mvt.title;
+      document.getElementById("seekSlider").value = 0;
+
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById("tab-" + i);
+        btn.className = (i === idx)
+          ? "px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 transition"
+          : "px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+      }
+      updateTimeUI(); drawScore();
+    }
+
+    function selectMovement(idx) { prepareMovement(idx); }
+
+    function togglePlay() {
+      initAudio();
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      isPlaying = !isPlaying;
+      document.getElementById("playIcon").textContent = isPlaying ? "⏸" : "▶";
+      document.getElementById("playLabel").textContent = isPlaying ? "Pause" : "Écouter";
+      if (isPlaying) {
+        const mvt = MOVEMENTS[currentMvtIdx];
+        if (currentBeat >= mvt.totalBeats - 0.5) { currentBeat = 0; scheduledIndex = 0; }
+        lastFrameTime = performance.now();
+        requestAnimationFrame(tick);
+      }
+    }
+
+    function onSeek(val) {
+      const mvt = MOVEMENTS[currentMvtIdx];
+      currentBeat = (val / 1000) * mvt.totalBeats;
+      scheduledIndex = mvt.notes.findIndex(n => n.s >= currentBeat);
+      if (scheduledIndex === -1) scheduledIndex = mvt.notes.length;
+      for (let i = scheduledIndex; i >= 0; i--) {
+        if (mvt.notes[i] && mvt.notes[i].sec) {
+          document.getElementById("sectionBadge").textContent = mvt.notes[i].sec;
+          break;
+        }
+      }
+      updateTimeUI(); drawScore();
+    }
+
+    function toggleGroup(grp) {
+      groupEnabled[grp] = !groupEnabled[grp];
+      document.getElementById("grp-" + grp).style.opacity = groupEnabled[grp] ? "1" : "0.35";
+      drawScore();
+    }
+
+    function updateTimeUI() {
+      const mvt = MOVEMENTS[currentMvtIdx];
+      const curSec = currentBeat * 60 / mvt.bpm;
+      const totSec = mvt.totalBeats * 60 / mvt.bpm;
+      const barNum = Math.floor(currentBeat / mvt.beatsPerBar) + 1;
+      document.getElementById("timeDisplay").textContent = `${formatSec(curSec)} / ${formatSec(totSec)}`;
+      document.getElementById("tempoBadge").textContent = `♩ = ${mvt.bpm} • ${mvt.meter} • Mes. ${barNum}`;
+      document.getElementById("seekSlider").value = Math.min(1000, Math.round((currentBeat / mvt.totalBeats) * 1000));
+    }
+
+    function tick(now) {
+      if (!isPlaying) return;
+      const dt = (now - lastFrameTime) / 1000;
+      lastFrameTime = now;
+
+      const mvt = MOVEMENTS[currentMvtIdx];
+      const secPerBeat = 60 / mvt.bpm;
+      currentBeat += dt / secPerBeat;
+
+      let activeSection = null;
+      while (scheduledIndex < mvt.notes.length && mvt.notes[scheduledIndex].s <= currentBeat) {
+        const n = mvt.notes[scheduledIndex];
+        playOrchestralNote(n, secPerBeat);
+        if (n.sec) activeSection = n.sec;
+        scheduledIndex++;
+      }
+      if (activeSection) document.getElementById("sectionBadge").textContent = activeSection;
+
+      updateTimeUI(); drawScore();
+
+      if (currentBeat >= mvt.totalBeats) {
+        if (document.getElementById("autoNext").checked && currentMvtIdx < 3) {
+          prepareMovement(currentMvtIdx + 1);
+          lastFrameTime = performance.now();
+          requestAnimationFrame(tick);
+        } else {
+          isPlaying = false;
+          document.getElementById("playIcon").textContent = "▶";
+          document.getElementById("playLabel").textContent = "Écouter";
+        }
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+
+    const canvas = document.getElementById("scoreCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      const mvt = MOVEMENTS[currentMvtIdx];
+      const winSize = 36;
+      const winStart = Math.max(0, Math.min(mvt.totalBeats - winSize, currentBeat - 8));
+      currentBeat = Math.max(0, Math.min(mvt.totalBeats, winStart + ratio * winSize));
+      scheduledIndex = mvt.notes.findIndex(n => n.s >= currentBeat);
+      if (scheduledIndex === -1) scheduledIndex = mvt.notes.length;
+      updateTimeUI(); drawScore();
+    });
+
+    function drawScore() {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      for (let y = 38; y < h - 15; y += 28) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      const mvt = MOVEMENTS[currentMvtIdx];
+      const minPitch = 32, maxPitch = 98;
+      const winSize = 36;
+      const winStart = Math.max(0, Math.min(mvt.totalBeats - winSize, currentBeat - 8));
+      const winEnd = winStart + winSize;
+
+      for (const n of mvt.notes) {
+        if (n.s + n.d < winStart) continue;
+        if (n.s > winEnd) break;
+        const grp = instToGroup[n.i] || "strings";
+        if (!groupEnabled[grp]) continue;
+
+        const x = ((n.s - winStart) / winSize) * w;
+        const nw = Math.max(3.5, (n.d / winSize) * w);
+        const y = h - 16 - ((n.p - minPitch) / (maxPitch - minPitch)) * (h - 54);
+        const active = (currentBeat >= n.s && currentBeat <= n.s + n.d);
+
+        ctx.fillStyle = instColors[n.i] || "#38bdf8";
+        ctx.globalAlpha = active ? 1.0 : 0.65;
+        ctx.beginPath();
+        ctx.roundRect(x, y - (active ? 4 : 2.5), nw, active ? 8 : 5, 2.5);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      const px = ((currentBeat - winStart) / winSize) * w;
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+    }
+
+    prepareMovement(0);
+  </script>
+</body>
+</html>
